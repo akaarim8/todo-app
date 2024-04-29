@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>To-Do List App</h1>
+    <div>
+        <input type="text" id="taskInput" placeholder="Add a task">
+        <button onclick="addTask()">Add Task</button>
+    </div>
+    <ul id="taskList"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => { listTasks(); });
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            if(taskInput.value.trim() === '') {
+                alert('Please enter a task.');
+                return;
+            }
+            fetch('/task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task: taskInput.value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                taskInput.value = ''; // Clear input field after adding
+                listTasks(); // Refresh the task list
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function listTasks() {
+            fetch('/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = ''; // Clear existing tasks
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = task;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = function() { deleteTask(index); };
+                    li.appendChild(deleteBtn);
+                    taskList.appendChild(li);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function deleteTask(taskId) {
+            fetch(`/task/${taskId}`, {
+                method: 'DELETE',
+            })
+            .then(() => {
+                listTasks(); // Refresh the task list after deletion
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
